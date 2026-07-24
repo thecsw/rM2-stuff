@@ -85,6 +85,15 @@
       "inherits": ["base", "toltec", "release-base"]
     },
     {
+      "name": "cross-armhf",
+      "inherits": ["base", "release-base"],
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/cross-armhf.cmake",
+        "BUILD_TESTS": false,
+        "BUILTIN_FONT": true
+      }
+    },
+    {
       "name": "dev-toltec",
       "inherits": ["base", "toltec", "debug-base"],
       "cacheVariables": {

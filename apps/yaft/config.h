@@ -21,6 +21,11 @@ struct YaftConfig {
   bool autoRotate = true;
   rmlib::Rotation rotation = rmlib::Rotation::None;
 
+  // Orientation to use when the Type Folio (pogo keyboard) is attached.
+  // Default to counter-clockwise: on the reMarkable 2 the folio opens so that
+  // the screen must rotate counter-clockwise from portrait to be upright.
+  rmlib::Rotation folioRotation = rmlib::Rotation::CounterClockwise;
+
   // Auto refresh full screen after 1024 updates.
   // Set to 0 to disable.
   int autoRefresh = 0;

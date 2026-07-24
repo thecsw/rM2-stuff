@@ -1,0 +1,24 @@
+# Cross-build environment for rM2-stuff (target: reMarkable 2, armv7-a hard-float).
+#
+# Produces a dynamically-linked armhf ELF that only needs libudev.so.1 +
+# libstdc++ + libc at runtime (all present on the device's Codex Linux).
+# libevdev is linked statically (libevdev.a) just like the upstream toltec
+# build, so no libevdev runtime dependency.
+FROM debian:bookworm-slim
+
+# Enable the armhf multi-arch so we can install cross dev packages that carry
+# the .a / .so files under /usr/arm-linux-gnueabihf.
+RUN dpkg --add-architecture armhf && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        cmake ninja-build pkg-config xxd git git-lfs ca-certificates \
+        gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
+        libevdev-dev:armhf libudev-dev:armhf libsystemd-dev:armhf && \
+    rm -rf /var/lib/apt/lists/*
+
+# Initialize git-lfs so `git lfs pull` works inside the container (rM2-stuff
+# stores its Noto font as an LFS object; without this the build embeds a 131-byte
+# LFS pointer as the font and stbtt_InitFont segfaults at runtime).
+RUN git lfs install --skip-repo
+
+WORKDIR /src

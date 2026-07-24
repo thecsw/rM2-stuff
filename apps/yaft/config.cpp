@@ -20,9 +20,17 @@ auto-rotate = true
 #  * none, clockwise, inverted, counterclockwise
 rotation = "none"
 
-# Do a full refresh after 1024 updates.
+# Orientation when the reMarkable Type Folio (pogo keyboard) is attached.
+#  * none, clockwise, inverted, counterclockwise
+# Defaults to counterclockwise. If the screen is upside-down or sideways
+# when you open the folio, change this to the opposite value, e.g.
+# folio-rotation = "clockwise".
+folio-rotation = "counterclockwise"
+
+# Do a full screen refresh (clears ghosting / "ink gunk") after this many
+# incremental updates. Lower = clearer screen but more flashing.
 # Set to 0 to disable auto refresh.
-auto-refresh = 1024
+auto-refresh = 256
 
 # Repeat delay for keyboards.
 repeat-delay = 600
@@ -94,6 +102,14 @@ getConfig(const toml::table& input) {
                cfg.rotation,
                tbl,
                "rotation",
+               { { "none", rmlib::Rotation::None },
+                 { "clockwise", rmlib::Rotation::Clockwise },
+                 { "inverted", rmlib::Rotation::Inverted },
+                 { "counterclockwise", rmlib::Rotation::CounterClockwise } });
+  parseMapping(errors,
+               cfg.folioRotation,
+               tbl,
+               "folio-rotation",
                { { "none", rmlib::Rotation::None },
                  { "clockwise", rmlib::Rotation::Clockwise },
                  { "inverted", rmlib::Rotation::Inverted },

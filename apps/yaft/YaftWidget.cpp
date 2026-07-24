@@ -10,7 +10,11 @@
 
 #include <Device.h>
 
+// inotify config hot-reload is a Linux-device-only feature (not available on
+// macOS / not useful in EMULATE mode).
+#ifndef EMULATE
 #include <sys/inotify.h>
+#endif
 
 #include <unistdpp/file.h>
 
@@ -111,6 +115,7 @@ YaftState::init(rmlib::AppContext& ctx, const rmlib::BuildContext& /*unused*/) {
   }
 
   if (std::holds_alternative<std::filesystem::path>(getWidget().configOrPath)) {
+#ifndef EMULATE
     watchPath = std::get<std::filesystem::path>(getWidget().configOrPath);
     inotifyFd = unistdpp::FD(inotify_init());
     if (inotifyFd.isValid()) {
@@ -120,6 +125,7 @@ YaftState::init(rmlib::AppContext& ctx, const rmlib::BuildContext& /*unused*/) {
 
       ctx.listenFd(inotifyFd.fd, [this, &ctx] { readInotify(ctx); });
     }
+#endif
   }
 
   initSignalHandler(ctx);
@@ -160,6 +166,9 @@ YaftState::init(rmlib::AppContext& ctx, const rmlib::BuildContext& /*unused*/) {
   }
 
   checkLandscape(ctx);
+  std::cerr << "yaft: init fb=" << ctx.getFbCanvas().width() << "x"
+            << ctx.getFbCanvas().height() << " term=" << term->cols << "x"
+            << term->lines << "\n";
   ctx.onDeviceUpdate([this, &ctx] { modify().checkLandscape(ctx); });
 }
 
@@ -169,14 +178,24 @@ YaftState::checkLandscape(rmlib::AppContext& ctx) {
     const auto hasKeyboard =
       ctx.getInputManager().getBaseDevices().pogoKeyboard != nullptr;
     hideKeyboard = hasKeyboard;
-    rotation = hasKeyboard ? Rotation::Clockwise : config.rotation;
+    // Use the user-configurable folio orientation instead of a hardcoded one.
+    // The reMarkable Type Folio opens to a specific landscape orientation;
+    // the correct direction depends on hardware/firmware, so it is tunable.
+    rotation = hasKeyboard ? config.folioRotation : config.rotation;
+    std::cerr << "yaft: checkLandscape hasKeyboard=" << hasKeyboard
+              << " folioRotation=" << static_cast<int>(config.folioRotation)
+              << " rotation=" << static_cast<int>(rotation)
+              << " hideKeyboard=" << hideKeyboard << "\n";
   } else {
     rotation = config.rotation;
+    std::cerr << "yaft: checkLandscape autoRotate=off rotation="
+              << static_cast<int>(rotation) << "\n";
   }
 }
 
 void
 YaftState::readInotify(rmlib::AppContext& ctx) const {
+#ifndef EMULATE
   union {
     std::array<char, 4096> buf;
     inotify_event ev;
@@ -213,6 +232,9 @@ YaftState::readInotify(rmlib::AppContext& ctx) const {
     self.config = cfgAndErr.config;
     self.checkLandscape(ctx);
   });
+#else
+  (void)ctx;
+#endif
 }
 
 YaftState
