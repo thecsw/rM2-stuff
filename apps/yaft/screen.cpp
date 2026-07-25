@@ -82,7 +82,12 @@ ScreenRenderObject::doLayout(const rmlib::Constraints& constraints) {
   assert(size.width != 0 && size.height != 0);
 
   if (widget->isLandscape) {
-    term_resize(widget->term, size.height, size.width, /* report */ true);
+    // Landscape: the display composites the framebuffer rotated, so the
+    // terminal should fill the framebuffer dimensions as-is (width=1404,
+    // height=1872). The display rotates this to landscape (1872x1404) on
+    // the physical screen. Don't swap here — swapping sizes the terminal
+    // for 1872 wide, but only 1404 of that shows, leaving a blank margin.
+    term_resize(widget->term, size.width, size.height, /* report */ true);
   } else {
     term_resize(widget->term, size.width, size.height, /* report */ true);
   }
