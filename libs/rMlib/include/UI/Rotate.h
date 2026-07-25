@@ -29,7 +29,9 @@ public:
 
   UpdateRegion doDraw(Canvas& canvas) override {
     const auto rot = this->getWidget().rot;
+    std::cerr << "Rotated::doDraw rot=" << static_cast<int>(rot) << " canvas=" << canvas.width() << "x" << canvas.height() << " rotation=" << static_cast<int>(canvas.rotation()) << "\n";
     auto subCanvas = canvas.subCanvas(canvas.rect(), invert(rot));
+    std::cerr << "Rotated::doDraw subCanvas=" << subCanvas.width() << "x" << subCanvas.height() << " rotation=" << static_cast<int>(subCanvas.rotation()) << "\n";
     auto res = this->child->draw(subCanvas, { 0, 0 });
     res.region = rotate(subCanvas.rect().size(), invert(rot), res.region);
     return res;
