@@ -48,6 +48,9 @@ public:
              const rmlib::BuildContext& buildCtx) const {
     using namespace rmlib;
 
+    static int buildCount = 0;
+    std::cerr << "yaft: build #" << ++buildCount << " rotation=" << static_cast<int>(rotation) << " hideKeyboard=" << hideKeyboard << "\n";
+
     const auto& layout = [this]() -> const Layout& {
       if (hideKeyboard) {
         return empty_layout;

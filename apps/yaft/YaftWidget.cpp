@@ -182,13 +182,13 @@ YaftState::init(rmlib::AppContext& ctx, const rmlib::BuildContext& /*unused*/) {
 
 void
 YaftState::checkLandscape(rmlib::AppContext& ctx) {
+  // Always hide the on-screen keyboard when a physical keyboard (folio) is
+  // attached, regardless of auto-rotate.
+  const auto hasKeyboard =
+    ctx.getInputManager().getBaseDevices().pogoKeyboard != nullptr;
+  hideKeyboard = hasKeyboard;
+
   if (config.autoRotate) {
-    const auto hasKeyboard =
-      ctx.getInputManager().getBaseDevices().pogoKeyboard != nullptr;
-    hideKeyboard = hasKeyboard;
-    // Use the user-configurable folio orientation instead of a hardcoded one.
-    // The reMarkable Type Folio opens to a specific landscape orientation;
-    // the correct direction depends on hardware/firmware, so it is tunable.
     rotation = hasKeyboard ? config.folioRotation : config.rotation;
     std::cerr << "yaft: checkLandscape hasKeyboard=" << hasKeyboard
               << " folioRotation=" << static_cast<int>(config.folioRotation)
@@ -196,8 +196,9 @@ YaftState::checkLandscape(rmlib::AppContext& ctx) {
               << " hideKeyboard=" << hideKeyboard << "\n";
   } else {
     rotation = config.rotation;
-    std::cerr << "yaft: checkLandscape autoRotate=off rotation="
-              << static_cast<int>(rotation) << "\n";
+    std::cerr << "yaft: checkLandscape autoRotate=off hasKeyboard=" << hasKeyboard
+              << " rotation=" << static_cast<int>(rotation)
+              << " hideKeyboard=" << hideKeyboard << "\n";
   }
 }
 

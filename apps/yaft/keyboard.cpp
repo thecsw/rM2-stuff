@@ -318,8 +318,10 @@ KeyboardRenderObject::sendKeyDown(int scancode,
                                   bool shift,
                                   bool alt,
                                   bool ctrl) {
-  // Ctrl-Z exits the app (easier than the stuck-key problem on the folio).
-  if (ctrl && scancode == 0x1a) {
+  // Ctrl-Z exits the app. The raw scancode is 'Z'/'z' (0x5a/0x7a); the ctrl
+  // conversion to 0x1a happens later in getKeyCodeStr, so we check the raw
+  // value here.
+  if (ctrl && (scancode == 0x5a || scancode == 0x7a)) {
     yaftRequestStop();
     return;
   }
