@@ -118,8 +118,11 @@ YaftState::init(rmlib::AppContext& ctx, const rmlib::BuildContext& /*unused*/) {
   auto cfgAndError = getWidget().getConfigAndError();
   config = std::move(cfgAndError.config);
 
+  // Log config errors to stderr only, NOT to the terminal (logTerm writes
+  // into the pty as visible text, which shows as garbled error lines on the
+  // e-ink screen even when the config is valid).
   if (const auto& err = cfgAndError.err; err.has_value()) {
-    logTerm(err->msg);
+    std::cerr << "yaft: config: " << err->msg << "\n";
   }
 
   if (std::holds_alternative<std::filesystem::path>(getWidget().configOrPath)) {
@@ -235,7 +238,7 @@ YaftState::readInotify(rmlib::AppContext& ctx) const {
   setState([&](auto& self) {
     auto cfgAndErr = loadConfig(self.watchPath);
     if (cfgAndErr.err.has_value()) {
-      self.logTerm(cfgAndErr.err->msg);
+      std::cerr << "yaft: config reload: " << cfgAndErr.err->msg << "\n";
     }
 
     self.config = cfgAndErr.config;
