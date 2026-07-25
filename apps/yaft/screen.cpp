@@ -82,12 +82,13 @@ ScreenRenderObject::doLayout(const rmlib::Constraints& constraints) {
   assert(size.width != 0 && size.height != 0);
 
   if (widget->isLandscape) {
-    // Landscape: the display composites the framebuffer rotated, so the
-    // terminal should fill the framebuffer dimensions as-is (width=1404,
-    // height=1872). The display rotates this to landscape (1872x1404) on
-    // the physical screen. Don't swap here — swapping sizes the terminal
-    // for 1872 wide, but only 1404 of that shows, leaving a blank margin.
-    term_resize(widget->term, size.width, size.height, /* report */ true);
+    // Landscape: the display composites the framebuffer rotated 90°, so the
+    // physical width = framebuffer height (1872) and physical height =
+    // framebuffer width (1404). Size the terminal for the DISPLAYED
+    // dimensions by swapping: term_resize(height, width) gives a terminal
+    // 1872 cols wide × 1404 lines tall, which fills the whole landscape
+    // screen after rotation.
+    term_resize(widget->term, size.height, size.width, /* report */ true);
   } else {
     term_resize(widget->term, size.width, size.height, /* report */ true);
   }
@@ -150,9 +151,9 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
                              terminal_t& term,
                              int line) const {
 
-  const bool isLandscape = false; // widget->isLandscape;
-  // Pixel drawing stays in portrait coordinates; the display's own
-  // rotation handles orientation. isLandscape only controls sizing.
+  const bool isLandscape = widget->isLandscape; // draw at swapped coords
+  // so a landscape-sized terminal (1872 wide) maps into the portrait
+  // framebuffer (1872 tall) via x<->y swap.
 
   // x in landscape, y in portrait.
   int zStart = isLandscape ? term.height - (term.marginTop + line * CELL_HEIGHT)
