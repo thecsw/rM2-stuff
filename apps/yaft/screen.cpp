@@ -80,6 +80,7 @@ rmlib::Size
 ScreenRenderObject::doLayout(const rmlib::Constraints& constraints) {
   const auto size = constraints.isBounded() ? constraints.max : constraints.min;
   assert(size.width != 0 && size.height != 0);
+  std::cerr << "Screen::doLayout size=" << size.width << "x" << size.height << " isLandscape=" << widget->isLandscape << "\n";
 
   if (widget->isLandscape) {
     // Landscape: draw in portrait coords (isLandscape=false in drawLine),
