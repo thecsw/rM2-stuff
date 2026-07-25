@@ -65,22 +65,26 @@ public:
 
     const auto repeatRateMs =
       std::chrono::milliseconds(1000) / config.repeatRate;
-    return Rotated(
-      rotation,
-      Column(
-        Expanded(Screen(term.get(), false, config.autoRefresh)),
-        Keyboard(term.get(),
-                 KeyboardParams{
-                   .layout = layout,
-                   .keymap = *config.keymap,
-                   .repeatDelay = std::chrono::milliseconds(config.repeatDelay),
-                   .repeatTime = repeatRateMs,
-                 },
-                 [this](int num) {
-                   setState([](auto& self) {
-                     self.smallKeyboard = !self.smallKeyboard;
-                   });
-                 })));
+    // Use Screen::isLandscape for rotation instead of the Rotated widget
+    // wrapper. The Rotated widget rotates a portrait-sized canvas, producing a
+    // thin column of text on a mostly-blank landscape screen. isLandscape=true
+    // makes Screen size the terminal in landscape dimensions AND draw pixels
+    // at swapped coordinates, filling the whole screen.
+    const bool isLandscape = rotation != Rotation::None;
+    return Column(
+      Expanded(Screen(term.get(), isLandscape, config.autoRefresh)),
+      Keyboard(term.get(),
+               KeyboardParams{
+                 .layout = layout,
+                 .keymap = *config.keymap,
+                 .repeatDelay = std::chrono::milliseconds(config.repeatDelay),
+                 .repeatTime = repeatRateMs,
+               },
+               [this](int num) {
+                 setState([](auto& self) {
+                   self.smallKeyboard = !self.smallKeyboard;
+                 });
+               }));
   }
 
 private:
