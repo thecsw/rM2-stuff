@@ -303,7 +303,12 @@ handleDevice(InputManager& mgr, udev_device& dev) {
     return;
   }
 
-  mgr.removeDevice(devnode);
+  // Ignore ALL non-add events (remove, change, etc.). On the reMarkable,
+  // the OS re-enumerates input devices on sleep/wake/ink-refresh, generating
+  // spurious remove events that clear pogoKeyboard and revert yaft's
+  // auto-rotate to portrait mid-session. Once a device is opened, it stays
+  // open for the app's lifetime; a genuinely-removed device just stops
+  // producing events. The user can relaunch if the folio is detached.
 }
 
 } // namespace
