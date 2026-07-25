@@ -72,7 +72,7 @@ public:
     // at swapped coordinates, filling the whole screen.
     const bool isLandscape = rotation != Rotation::None;
     return Column(
-      Expanded(Screen(term.get(), isLandscape, config.autoRefresh)),
+      Expanded(Screen(term.get(), isLandscape, config.autoRefresh, config.fontScale)),
       Keyboard(term.get(),
                KeyboardParams{
                  .layout = layout,

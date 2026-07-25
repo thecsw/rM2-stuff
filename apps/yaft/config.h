@@ -38,6 +38,10 @@ struct YaftConfig {
   // Key repeat rate in chars / sec.
   int repeatRate = 25;
 
+  // Font scale: 1 = default (16x32 cells), 2 = double size (32x64).
+  // Scales the BDF glyph rendering so text is bigger (and fewer cells fit).
+  int fontScale = 1;
+
   static YaftConfig getDefault();
 };
 

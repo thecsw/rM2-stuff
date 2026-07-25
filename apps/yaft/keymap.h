@@ -20,6 +20,7 @@ using KeyMap = std::unordered_map<int, EvKeyInfo>;
 
 extern const KeyMap qwerty_keymap;
 extern const KeyMap rm_qwerty_keymap;
+extern const KeyMap rm_dvorak_keymap;
 extern const KeyMap timower_keymap;
 
 // Name mapping for config file
@@ -27,5 +28,6 @@ const std::initializer_list<std::pair<std::string_view, const KeyMap*>>
   keymaps = {
     { "qwerty", &qwerty_keymap },
     { "rm-qwerty", &rm_qwerty_keymap },
+    { "rm-dvorak", &rm_dvorak_keymap },
     { "timower", &timower_keymap },
   };

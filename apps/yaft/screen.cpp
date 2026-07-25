@@ -80,16 +80,18 @@ rmlib::Size
 ScreenRenderObject::doLayout(const rmlib::Constraints& constraints) {
   const auto size = constraints.isBounded() ? constraints.max : constraints.min;
   assert(size.width != 0 && size.height != 0);
-  std::cerr << "Screen::doLayout size=" << size.width << "x" << size.height << " isLandscape=" << widget->isLandscape << "\n";
+  const int fs = widget->fontScale;
+  std::cerr << "Screen::doLayout size=" << size.width << "x" << size.height << " isLandscape=" << widget->isLandscape << " fontScale=" << fs << "\n";
+
+  // Scale down the dimensions for term_resize so the terminal computes
+  // fewer cols/lines (bigger cells). drawLine scales pixel positions back up.
+  const auto sw = size.width / fs;
+  const auto sh = size.height / fs;
 
   if (widget->isLandscape) {
-    // Landscape: draw in portrait coords (isLandscape=false in drawLine),
-    // display composites rotated. Size the terminal for the framebuffer's
-    // VISIBLE width (1404 = fb width) so text fills the screen with no
-    // margin. Don't swap — swapping sizes for 1872 but only 1404 shows.
-    term_resize(widget->term, size.width, size.height, /* report */ true);
+    term_resize(widget->term, sw, sh, /* report */ true);
   } else {
-    term_resize(widget->term, size.width, size.height, /* report */ true);
+    term_resize(widget->term, sw, sh, /* report */ true);
   }
   return size;
 }
@@ -116,8 +118,8 @@ ScreenRenderObject::doDraw(rmlib::Canvas& canvas) {
     }
 
     bool useA2 = widget->isLandscape
-                   ? term.lines * CELL_HEIGHT <= currentRect.width()
-                   : term.lines * CELL_HEIGHT <= currentRect.height();
+                   ? term.lines * CELL_HEIGHT * widget->fontScale <= currentRect.width()
+                   : term.lines * CELL_HEIGHT * widget->fontScale <= currentRect.height();
     fb->doUpdate(canvas.subCanvas(currentRect),
                  useA2 ? fb::Waveform::A2 : fb::Waveform::DU,
                  useA2 ? fb::UpdateFlags::None : fb::UpdateFlags::Priority);
@@ -153,13 +155,14 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
   const bool isLandscape = false; // widget->isLandscape;
   // Draw in portrait coordinates; the display's compositing handles rotation.
   // isLandscape=true in drawLine produces 180° inverted; false gives upright.
+  const int fs = widget->fontScale; // 1 = normal, 2 = double, etc.
 
-  // x in landscape, y in portrait.
-  int zStart = isLandscape ? term.height - (term.marginTop + line * CELL_HEIGHT)
-                           : term.marginTop + line * CELL_HEIGHT;
+  // x in landscape, y in portrait. Scale positions by fontScale.
+  int zStart = isLandscape ? (term.height - (term.marginTop + line * CELL_HEIGHT)) * fs
+                           : (term.marginTop + line * CELL_HEIGHT) * fs;
 
   for (int col = 0; col < term.cols; col++) {
-    int marginLeft = term.marginLeft + col * CELL_WIDTH;
+    int marginLeft = (term.marginLeft + col * CELL_WIDTH) * fs;
 
     auto& cell = term.cells[line][col];
 
@@ -221,8 +224,8 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
       }
 
       for (int w = 0; w < CELL_WIDTH; w++) {
-        const auto pos = isLandscape ? Point{ zStart - h, marginLeft + w }
-                                     : Point{ marginLeft + w, zStart + h };
+        const auto basePos = isLandscape ? Point{ zStart - h * fs, marginLeft + w * fs }
+                                         : Point{ marginLeft + w * fs, zStart + h * fs };
 
         /* set fg or bg */
         const auto* glyph = (cell.attribute & ATTR_BOLD) != 0
@@ -247,9 +250,12 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
             break;
         }
 
-        // We only care about rgb555, as we assume that format above.
-        // So do a direct assign instead of memcpy.
-        canvas.setPixel(pos, pixel);
+        // Draw an fs×fs block for each glyph pixel (font scaling).
+        for (int dy = 0; dy < fs; dy++) {
+          for (int dx = 0; dx < fs; dx++) {
+            canvas.setPixel(basePos + Point{ dx, dy }, pixel);
+          }
+        }
       }
     }
   }
@@ -259,9 +265,9 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
 
   const auto size = this->getSize();
   return isLandscape
-           ? Rect{ { zStart - CELL_HEIGHT, 0 }, { zStart, size.height - 1 } }
+           ? Rect{ { zStart - CELL_HEIGHT * fs, 0 }, { zStart, size.height - 1 } }
            : Rect{ { 0, zStart },
-                   { size.width - 1, zStart + CELL_HEIGHT - 1 } };
+                   { size.width - 1, zStart + CELL_HEIGHT * fs - 1 } };
 }
 
 template<typename Ev>

@@ -36,6 +36,8 @@ auto-refresh = 256
 repeat-delay = 600
 # Repeat rate in chars per second.
 repeat-rate = 25
+# Font scale: 1 = normal (16x32 cells), 2 = double size. Bigger = fewer chars.
+font-scale = 1
 )";
 
 void
@@ -119,6 +121,7 @@ getConfig(const toml::table& input) {
   parseValue(errors, cfg.autoRefresh, tbl, "auto-refresh");
   parseValue(errors, cfg.repeatDelay, tbl, "repeat-delay");
   parseValue(errors, cfg.repeatRate, tbl, "repeat-rate");
+  parseValue(errors, cfg.fontScale, tbl, "font-scale");
 
   if (!tbl.empty()) {
     for (const auto& [key, _] : tbl) {
