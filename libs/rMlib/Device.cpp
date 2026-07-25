@@ -95,6 +95,14 @@ std::optional<BaseDevice>
 getBaseDevice(std::string_view name) {
   return getDeviceType()
     .transform([&](auto devType) -> std::optional<BaseDevice> {
+      // qtfb's RM2 input shim presents the touch device with the legacy RM1
+      // name, while retaining RM2 coordinate ranges.  Keep the RM2 transform
+      // so a qtfb-launched app receives touch positions in framebuffer space.
+      if (devType == DeviceType::reMarkable2 &&
+          name.find("cyttsp5_mt") != std::string_view::npos) {
+        return rm2_paths.front();
+      }
+
       for (const auto& device : getInputNames(devType)) {
         if (name.find(device.name) != std::string_view::npos) {
           return device;

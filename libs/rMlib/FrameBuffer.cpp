@@ -44,8 +44,12 @@ FrameBuffer::detectType() {
         return rM2Stuff;
       }
 
-      if (getenv("RM2FB_SHIM") != nullptr) {
-        std::cerr << "Using rm2fb shim\n";
+      // qtfb is the framebuffer shim used by xovi/AppLoad.  Unlike rm2fb it
+      // does not set RM2FB_SHIM; AppLoad gives every qtfb client a QTFB_KEY.
+      // Treat it like the existing shim backend, whose mxcfb update ABI qtfb
+      // emulates.
+      if (getenv("RM2FB_SHIM") != nullptr || getenv("QTFB_KEY") != nullptr) {
+        std::cerr << "Using framebuffer shim\n";
         return Shim;
       }
 
