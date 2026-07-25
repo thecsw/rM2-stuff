@@ -18,8 +18,11 @@ struct YaftConfig {
   // Keymap of physical keyboard.
   const KeyMap* keymap = keymaps.begin()->second;
 
-  bool autoRotate = true;
-  rmlib::Rotation rotation = rmlib::Rotation::None;
+  // Default to forced counter-clockwise landscape (the orientation that
+  // works correctly on the rM2 via the qtfb-shim). auto-rotate is off because
+  // the udev device-update path reverts to portrait mid-session.
+  bool autoRotate = false;
+  rmlib::Rotation rotation = rmlib::Rotation::CounterClockwise;
 
   // Orientation to use when the Type Folio (pogo keyboard) is attached.
   // Default to counter-clockwise: on the reMarkable 2 the folio opens so that

@@ -139,6 +139,9 @@ getSlot<input::PenEvent>(const input::PenEvent& ev) {
 }
 } // namespace
 
+// Forward declaration: defined in YaftWidget.cpp, stops the app event loop.
+extern "C" void yaftRequestStop();
+
 std::unique_ptr<rmlib::RenderObject>
 Keyboard::createRenderObject() const {
   return std::make_unique<KeyboardRenderObject>(*this);
@@ -315,6 +318,12 @@ KeyboardRenderObject::sendKeyDown(int scancode,
                                   bool shift,
                                   bool alt,
                                   bool ctrl) {
+  // Ctrl-Z exits the app (easier than the stuck-key problem on the folio).
+  if (ctrl && scancode == 0x1a) {
+    yaftRequestStop();
+    return;
+  }
+
   if (isCallback(scancode)) {
     if (widget->callback) {
       widget->callback(getCallback(scancode));

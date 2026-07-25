@@ -25,6 +25,14 @@ const char* termName = "yaft-256color";
 
 AppContext* globalCtx = nullptr;
 
+// Called from keyboard.cpp when Ctrl-Z is pressed — stops the app.
+extern "C" void
+yaftRequestStop() {
+  if (globalCtx != nullptr) {
+    globalCtx->stop();
+  }
+}
+
 void
 sigHandler(int signo) {
   if (signo == SIGCHLD) {
