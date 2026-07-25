@@ -145,7 +145,9 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
                              terminal_t& term,
                              int line) const {
 
-  const bool isLandscape = widget->isLandscape;
+  const bool isLandscape = false; // widget->isLandscape;
+  // Pixel drawing stays in portrait coordinates; the display's own
+  // rotation handles orientation. isLandscape only controls sizing.
 
   // x in landscape, y in portrait.
   int zStart = isLandscape ? term.height - (term.marginTop + line * CELL_HEIGHT)
