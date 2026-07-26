@@ -80,13 +80,13 @@ rmlib::Size
 ScreenRenderObject::doLayout(const rmlib::Constraints& constraints) {
   const auto size = constraints.isBounded() ? constraints.max : constraints.min;
   assert(size.width != 0 && size.height != 0);
-  const int fs = widget->fontScale;
+  const float fs = widget->fontScale;
   std::cerr << "Screen::doLayout size=" << size.width << "x" << size.height << " isLandscape=" << widget->isLandscape << " fontScale=" << fs << "\n";
 
   // Scale down the dimensions for term_resize so the terminal computes
   // fewer cols/lines (bigger cells). drawLine scales pixel positions back up.
-  const auto sw = size.width / fs;
-  const auto sh = size.height / fs;
+  const auto sw = int(size.width / fs);
+  const auto sh = int(size.height / fs);
 
   if (widget->isLandscape) {
     term_resize(widget->term, sw, sh, /* report */ true);
@@ -119,7 +119,7 @@ ScreenRenderObject::doDraw(rmlib::Canvas& canvas) {
 
     bool useA2 = widget->isLandscape
                    ? term.lines * CELL_HEIGHT * widget->fontScale <= currentRect.width()
-                   : term.lines * CELL_HEIGHT * widget->fontScale <= currentRect.height();
+                   : term.lines * CELL_HEIGHT * widget->fontScale <= currentRect.height();;
     fb->doUpdate(canvas.subCanvas(currentRect),
                  useA2 ? fb::Waveform::A2 : fb::Waveform::DU,
                  useA2 ? fb::UpdateFlags::None : fb::UpdateFlags::Priority);
@@ -155,14 +155,14 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
   const bool isLandscape = false; // widget->isLandscape;
   // Draw in portrait coordinates; the display's compositing handles rotation.
   // isLandscape=true in drawLine produces 180° inverted; false gives upright.
-  const int fs = widget->fontScale; // 1 = normal, 2 = double, etc.
+  const float fs = widget->fontScale; // 1.0 = normal, 1.5 = bigger, 2.0 = double
 
   // x in landscape, y in portrait. Scale positions by fontScale.
-  int zStart = isLandscape ? (term.height - (term.marginTop + line * CELL_HEIGHT)) * fs
-                           : (term.marginTop + line * CELL_HEIGHT) * fs;
+  int zStart = isLandscape ? int((term.height - (term.marginTop + line * CELL_HEIGHT)) * fs)
+                           : int((term.marginTop + line * CELL_HEIGHT) * fs);
 
   for (int col = 0; col < term.cols; col++) {
-    int marginLeft = (term.marginLeft + col * CELL_WIDTH) * fs;
+    int marginLeft = int((term.marginLeft + col * CELL_WIDTH) * fs);
 
     auto& cell = term.cells[line][col];
 
@@ -223,15 +223,11 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
         std::swap(bgGray, fgGray);
       }
 
+      const auto* glyph = (cell.attribute & ATTR_BOLD) != 0
+                            ? cell.glyph.boldp
+                            : cell.glyph.regularp;
+
       for (int w = 0; w < CELL_WIDTH; w++) {
-        const auto basePos = isLandscape ? Point{ zStart - h * fs, marginLeft + w * fs }
-                                         : Point{ marginLeft + w * fs, zStart + h * fs };
-
-        /* set fg or bg */
-        const auto* glyph = (cell.attribute & ATTR_BOLD) != 0
-                              ? cell.glyph.boldp
-                              : cell.glyph.regularp;
-
         const auto grayMode =
           (glyph->bitmap[h] & (0x01 << (bdfPadding + CELL_WIDTH - 1 - w))) != 0U
             ? fgGray
@@ -240,20 +236,27 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
         int pixel = 0;
         switch (grayMode) {
           case White:
-            pixel = 0; // 0xFFFF;
+            pixel = 0;
             break;
           case Dither:
             pixel = (h % 2) == (w % 2) ? 0x0 : 0xFFFF;
             break;
           case Black:
-            pixel = 0xFFFF; // 0;
+            pixel = 0xFFFF;
             break;
         }
 
         // Draw an fs×fs block for each glyph pixel (font scaling).
-        for (int dy = 0; dy < fs; dy++) {
-          for (int dx = 0; dx < fs; dx++) {
-            canvas.setPixel(basePos + Point{ dx, dy }, pixel);
+        int blockW = int((w + 1) * fs) - int(w * fs);
+        int blockH = int((h + 1) * fs) - int(h * fs);
+        int baseX = int(marginLeft + w * fs);
+        int baseY = int(zStart + h * fs);
+        for (int dy = 0; dy < blockH; dy++) {
+          for (int dx = 0; dx < blockW; dx++) {
+            const auto pos = isLandscape
+              ? Point{ baseY - dy, baseX + dx }
+              : Point{ baseX + dx, baseY + dy };
+            canvas.setPixel(pos, pixel);
           }
         }
       }
@@ -264,10 +267,11 @@ ScreenRenderObject::drawLine(rmlib::Canvas& canvas,
     ((term.mode & MODE_CURSOR) != 0u) && term.cursor.y == line;
 
   const auto size = this->getSize();
+  const int cellH = int(CELL_HEIGHT * widget->fontScale);
   return isLandscape
-           ? Rect{ { zStart - CELL_HEIGHT * fs, 0 }, { zStart, size.height - 1 } }
+           ? Rect{ { zStart - cellH, 0 }, { zStart, size.height - 1 } }
            : Rect{ { 0, zStart },
-                   { size.width - 1, zStart + CELL_HEIGHT * fs - 1 } };
+                   { size.width - 1, zStart + cellH - 1 } };
 }
 
 template<typename Ev>

@@ -36,8 +36,8 @@ auto-refresh = 256
 repeat-delay = 600
 # Repeat rate in chars per second.
 repeat-rate = 25
-# Font scale: 1 = normal (16x32 cells), 2 = double size. Bigger = fewer chars.
-font-scale = 1
+# Font scale: 1.0 = normal (16x32 cells), 1.5 = 50% bigger, 2.0 = double.
+font-scale = 1.0
 )";
 
 void

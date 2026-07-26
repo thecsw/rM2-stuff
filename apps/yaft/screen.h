@@ -9,9 +9,9 @@ class ScreenRenderObject;
 
 class Screen : public rmlib::Widget<ScreenRenderObject> {
 public:
-  Screen(struct terminal_t* term, bool isLandscape, int autoRefresh, int fontScale = 1)
+  Screen(struct terminal_t* term, bool isLandscape, int autoRefresh, float fontScale = 1.0f)
     : term(term), isLandscape(isLandscape), autoRefresh(autoRefresh)
-    , fontScale(fontScale < 1 ? 1 : fontScale) {}
+    , fontScale(fontScale < 0.5f ? 1.0f : fontScale) {}
 
   std::unique_ptr<rmlib::RenderObject> createRenderObject() const;
 
@@ -21,7 +21,7 @@ private:
 
   bool isLandscape = false;
   int autoRefresh = 0;
-  int fontScale = 1;
+  float fontScale = 1.0f;
 };
 
 class ScreenRenderObject : public rmlib::LeafRenderObject<Screen> {
