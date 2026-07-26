@@ -254,7 +254,9 @@ const KeyMap rm_dvorak_keymap = {
   { KEY_LEFTALT, { Alt } },
   { KEY_SPACE, { ' ' } },
   { KEY_CAPSLOCK, { Escape } },
-  { KEY_RIGHTALT, { Alt } },
+  // Right Alt/Opt → Escape, so the Type Folio (which has no Esc key) can exit
+  // vim insert mode. Left Alt stays Alt for normal use.
+  { KEY_RIGHTALT, { Escape } },
   { KEY_UP, { Up } },
   { KEY_LEFT, { Left } },
   { KEY_RIGHT, { Right } },
